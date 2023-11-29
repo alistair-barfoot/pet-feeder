@@ -34,6 +34,7 @@ void loop() {
   }
   if(times == 5){
     Serial.println("Your pet is by the pet feeder");
+    delay(10 * 60 * 1000);
     // send message back to app
   }
   delay(1000);
