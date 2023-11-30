@@ -16,14 +16,13 @@ int counter = 0;
 int nextNotif = 0;
 int load = 200;
 
-int times = {0,0,0,0,0,0,0,0,0,0};
+int times[] = {0,0,0,0,0,0,0,0,0,0};
 const int hours = 19;
 const int minutes = 25;
 const int initial_time = 1000*3600*(hours+minutes/60);
 int curr_time;
 long duration; // variables for the ultrasonic sensor
 int distance;
-int times;
 int closed = true; // start with the food chamber closed
 int pos = 0; // set to start pos
 String message = "";
@@ -37,7 +36,6 @@ void setup(){
   scale.set_scale(-292.511);
   scale.tare();
 
-  myservo.attach(9); // set up servo
   myservo.write(pos); // initial servo pos
 
   pinMode(trigPin, OUTPUT); // set up ultrasonic
@@ -71,7 +69,7 @@ void loop(){
     if(times[9] == 0){
       // error : FULL
     }
-    BT_serial.print("Please enter the hour of the time");
+    BTSerial.print("Please enter the hour of the time");
     if (BTSerial.available()) {
       flag = BTSerial.read(); 
       if(flag != 10 && flag != 13 && flag != 0){ // weird characters
