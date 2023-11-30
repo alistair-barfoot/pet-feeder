@@ -1,12 +1,16 @@
 #include <SoftwareSerial.h>
 #include <Servo.h>
+#include "HX711.h"
 
 SoftwareSerial BTSerial(2,3); // RX, TX
 Servo myservo;
 
 const int trigPin = 7;
 const int echoPin = 8;
+const int LOADCELL_DOUT_PIN = 11;
+const int LOADCELL_SCK_PIN = 10;
 int flag = 0;
+const int bowlWeight = 121;
 
 long duration; // variables for the ultrasonic sensor
 int distance;
@@ -20,6 +24,9 @@ void setup(){
   Serial.begin(9600); // set up BT module
   BTSerial.begin(9600);
   Serial.println("Bluetooth connected");
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  scale.set_scale(-292.511);
+  scale.tare();
 
   myservo.attach(9); // set up servo
   myservo.write(pos); // initial servo pos
@@ -40,9 +47,24 @@ void loop(){
         message = messageBuffer;
         messageBuffer = "";
         Serial.print(message);
+        if(message == "open;"){
+          dispenseFood();
+        }
       }
     }
   delay(1000);
+}
+
+void dispenseFood(int desiredWeight){
+  int scale_reading = scale.read_average(20);
+  int weight = scale_reading - bowlWeight;
+  do{
+    openHatch();
+    delay(100);
+    closeHatch();
+    scale_reading = scale.read_average(20);
+    weight = scale_reading - bowlWeight;
+  } while(weight < desiredWeight - 50);
 }
 
 void openHatch() {
