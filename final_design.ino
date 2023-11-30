@@ -114,6 +114,8 @@ void loop(){
       nextNotif = millis() + 10 * 60 * 1000;
       counter = 0;
     }
+  } else {
+    counter = 0;
   }
   delay(1000);
 }
