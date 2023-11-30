@@ -16,6 +16,11 @@ int counter = 0;
 int nextNotif = 0;
 int load = 200;
 
+int times = {0,0,0,0,0,0,0,0,0,0};
+const int hours = 19;
+const int minutes = 25;
+const int initial_time = 1000*3600*(hours+minutes/60);
+int curr_time;
 long duration; // variables for the ultrasonic sensor
 int distance;
 int times;
@@ -41,6 +46,12 @@ void setup(){
 }
 
 void loop(){
+  curr_time = initial_time + millis();
+  for(int i = 0; i < 9; i++){
+    if(times[i] == curr_time){
+      dispenseFood(load);
+    }
+  }
   if (BTSerial.available()) {
     flag = BTSerial.read(); 
     char letter = flag;
@@ -51,11 +62,51 @@ void loop(){
         message = messageBuffer;
         messageBuffer = "";
         Serial.print(message);
-        if(message == "open;"){
-          dispenseFood(load);
-        }
       }
     }
+  }
+  if(message == "open;"){
+    dispenseFood(load);
+  } else if (message == "add;"){
+    if(times[9] == 0){
+      // error : FULL
+    }
+    BT_serial.print("Please enter the hour of the time");
+    if (BTSerial.available()) {
+      flag = BTSerial.read(); 
+      if(flag != 10 && flag != 13 && flag != 0){ // weird characters
+        flag = flag - '0';
+      }
+    }
+    int new_time = flag * 1000 * 3600;
+    int arr_pos;
+    for(int i = 0; i < 9; i++){
+      if(new_time >= times[i] && new_time <= times[i+1]){
+        arr_pos = i;
+        break;
+      }
+      arr_pos = 9;
+    }
+    for(int i = 8; i >= arr_pos; i--){
+      times[i+1] = times[i];
+    }
+    times[arr_pos] = new_time;
+  } else if(message == "adjust;"){
+    BTSerial.print("Enter the new load");
+    if (BTSerial.available()) {
+    flag = BTSerial.read(); 
+    char letter = flag;
+    if(flag != 10 && flag != 13 && flag != 0){ // weird characters
+      Serial.println(letter);
+      messageBuffer += letter;
+      if(flag == 59){ // ;
+        message = messageBuffer;
+        messageBuffer = "";
+        Serial.print(message);
+      }
+    }
+  }
+    load = strtoint(message);
   }
   int dist = getDist(); // activate the ultrasonic sensor
   if(dist < 10){
@@ -121,4 +172,21 @@ int getDist(){ // output in cm
   Serial.print(distance);
   Serial.println(" cm");
   return distance;
+}
+
+int strtoint(String input){
+  int end;
+  int i = 0;
+  int output = 0;
+  while(input[i] != ';'){
+    i++;
+  }
+  end = i-1;
+  int count = 0;
+  for(int i = end; i>0; i--){
+    output = output + pow(10,count) * (input[i] - '0'); 
+    count++;
+  }
+
+  return output;
 }
