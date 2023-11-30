@@ -4,6 +4,7 @@
 
 SoftwareSerial BTSerial(2,3); // RX, TX
 Servo myservo;
+HX711 scale;
 
 const int trigPin = 7;
 const int echoPin = 8;
@@ -11,6 +12,9 @@ const int LOADCELL_DOUT_PIN = 11;
 const int LOADCELL_SCK_PIN = 10;
 int flag = 0;
 const int bowlWeight = 121;
+int counter = 0;
+int nextNotif = 0;
+int load = 200;
 
 long duration; // variables for the ultrasonic sensor
 int distance;
@@ -37,7 +41,7 @@ void setup(){
 }
 
 void loop(){
-  if (BTSerial.available()) 
+  if (BTSerial.available()) {
     flag = BTSerial.read(); 
     char letter = flag;
     if(flag != 10 && flag != 13 && flag != 0){ // weird characters
@@ -48,10 +52,20 @@ void loop(){
         messageBuffer = "";
         Serial.print(message);
         if(message == "open;"){
-          dispenseFood();
+          dispenseFood(load);
         }
       }
     }
+  }
+  int dist = getDist(); // activate the ultrasonic sensor
+  if(dist < 10){
+    counter = counter + 1;
+    if(counter >= 5 && millis() > nextNotif){
+      BTSerial.print("Your pet is by the pet feeder");
+      nextNotif = millis() + 10 * 60 * 1000;
+      counter = 0;
+    }
+  }
   delay(1000);
 }
 
